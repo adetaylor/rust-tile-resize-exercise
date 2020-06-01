@@ -93,3 +93,35 @@ fn main() {
 		Ok(_) => {}
 	};
 }
+
+#[cfg(test)]
+mod tests {
+	use process_image;
+
+	#[test]
+	fn test_tile1() {
+		let infile: &[u8] = include_bytes!("../../tiles/tile.png");
+		let outfile: &[u8] = include_bytes!("../../tiles/tile-converted.png");
+		let mut processedout = std::io::Cursor::new(Vec::new());
+		process_image(std::io::Cursor::new(infile), &mut processedout).unwrap();
+		assert_eq!(outfile.to_vec(), processedout.into_inner());
+	}
+
+	#[test]
+	fn test_tile2() {
+		let infile: &[u8] = include_bytes!("../../tiles/tile2.png");
+		let outfile: &[u8] = include_bytes!("../../tiles/tile2-converted.png");
+		let mut processedout = std::io::Cursor::new(Vec::new());
+		process_image(std::io::Cursor::new(infile), &mut processedout).unwrap();
+		assert_eq!(outfile.to_vec(), processedout.into_inner());
+	}
+
+	#[test]
+	fn test_tile3() {
+		let infile: &[u8] = include_bytes!("../../tiles/tile3.png");
+		let outfile: &[u8] = include_bytes!("../../tiles/tile3-converted.png");
+		let mut processedout = std::io::Cursor::new(Vec::new());
+		process_image(std::io::Cursor::new(infile), &mut processedout).unwrap();
+		assert_eq!(outfile.to_vec(), processedout.into_inner());
+	}
+}
