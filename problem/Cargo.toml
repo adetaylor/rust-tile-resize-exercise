@@ -1,0 +1,8 @@
+[package]
+name = "solution"
+version = "0.1.0"
+authors = ["Adrian Taylor <adrian@macrobug.com>"]
+
+[dependencies]
+image = { version="0.23.4", features=["png"]}
+clap = "2.33"
