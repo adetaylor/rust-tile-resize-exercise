@@ -2,10 +2,9 @@ extern crate image;
 extern crate clap;
 
 use clap::{App, Arg}; 
-use image::{ImageOutputFormat, ImageError, GenericImageView};
+use image::{Rgba, ImageOutputFormat, ImageError, GenericImageView};
 use image::io::Reader;
 use std::fs::File;
-use std::ffi::OsString;
 use std::path::Path;
 use std::io::{Read, Write, Seek, BufRead, BufReader};
 
@@ -16,14 +15,59 @@ enum ConvertError {
 	CannotWrite(ImageError),
 }
 
+const BLACK: image::Rgba<u8> = Rgba([0, 0, 0, 255]);
+
 fn process_image<R, W>(input: R, mut output: W) -> Result<(), ConvertError> 
 	where R: Read + Seek + BufRead, W: Write
 {
 	let r = Reader::new(input).with_guessed_format().map_err(|e| ConvertError::InputReadError(e))?;
-	let mut image = r.decode().map_err(|e| ConvertError::CannotDecode(e))?;
-	// Process image
-	let topleft = image.get_pixel(0, 0);
-	image.write_to(&mut output, ImageOutputFormat::Png).map_err(|e| ConvertError::CannotWrite(e))?;
+	let image = r.decode().map_err(|e| ConvertError::CannotDecode(e))?;
+	let (width, height) = image.dimensions();
+	let mut lower_y = 0;
+	let mut lower_x = 0;
+	let mut lower_d = 0;
+	for d in 0..width {
+		if image.get_pixel(d, d) == BLACK {
+			lower_d = d;
+			break;
+		}
+	}
+	for x in 0..=lower_d {
+		if image.get_pixel(x, lower_d) == BLACK {
+			lower_x = x;
+			break;
+		}
+	}
+	for y in 0..=lower_d {
+		if image.get_pixel(lower_d, y) == BLACK {
+			lower_y = y;
+			break;
+		}
+	}
+	let mindimension = std::cmp::min(width, height);
+	let mut upper_d = 0;
+	let mut upper_x = 0;
+	let mut upper_y = 0;
+	for d in 1..mindimension {
+		if image.get_pixel(width-d, height-d) == BLACK {
+			upper_d = d;
+			break;
+		}
+	}
+	for x in 1..=width {
+		if image.get_pixel(width-x, height-upper_d) == BLACK {
+			upper_x = width-x+1;
+			break;
+		}
+	}
+	for y in 1..=height {
+		if image.get_pixel(width-upper_d, height-y) == BLACK {
+			upper_y = height-y+1;
+			break;
+		}
+	}
+	let newimage = image.crop_imm(lower_x, lower_y, upper_x-lower_x, upper_y-lower_y);
+	newimage.write_to(&mut output, ImageOutputFormat::Png).map_err(|e| ConvertError::CannotWrite(e))?;
 	Ok(())
 }
 
